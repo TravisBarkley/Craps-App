@@ -95,6 +95,8 @@ body{font-family:'Segoe UI',sans-serif;background:#1a472a;color:#fff;min-height:
 .ats-bet{background:rgba(0,0,0,0.3);border:1px solid rgba(255,68,255,0.3);border-radius:4px;padding:3px;cursor:pointer;text-align:center;font-size:0.55rem;color:#aaa;min-height:26px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;position:relative}
 .ats-bet:hover{background:rgba(255,68,255,0.15);border-color:#ff44ff}
 .ats-bet.has-bet{border-color:#ff44ff}
+.ats-bet.contractual{position:relative}
+.ats-bet.contractual::after{content:'🔒 CONTRACT';position:absolute;top:1px;right:2px;font-size:0.4rem;color:#ff8c00;font-weight:700;letter-spacing:0.5px}
 
 /* CHIPS on bet zones */
 .chip-stack{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;align-items:center;cursor:pointer}
@@ -410,6 +412,8 @@ let state = {
   // ATS tracking
   atsSmallHit: new Set(),
   atsTallHit: new Set(),
+  // ATS contractual lock — once a roll occurs with an ATS bet, it cannot be removed
+  atsContractual: {small: false, tall: false, all: false},
   rollCount: 0,
   log: []
 };
@@ -665,6 +669,10 @@ function isBetRemovable(key) {
   // Don't pass CAN be removed (bad etiquette but allowed)
   if(key==='pass' && state.point) return false;
   if(key.startsWith('come_point_')) return false;
+  // ATS bets are contractual after first roll
+  if(key==='ats_small' && state.atsContractual.small) return false;
+  if(key==='ats_tall' && state.atsContractual.tall) return false;
+  if(key==='ats_all' && state.atsContractual.all) return false;
   return true;
 }
 
@@ -781,6 +789,10 @@ function clearBets() {
   // Return all non-contractual bets
   const contractual = new Set();
   if(state.point) contractual.add('pass'); // pass is contractual once point set
+  // ATS bets are contractual after first roll
+  if(state.atsContractual.small) contractual.add('small');
+  if(state.atsContractual.tall) contractual.add('tall');
+  if(state.atsContractual.all) contractual.add('all');
   // Don't pass CAN be removed (player's choice)
   
   let returned = 0;
@@ -803,8 +815,13 @@ function clearBets() {
   // Reset on/off
   Object.keys(state.betOnOff).forEach(k=>state.betOnOff[k]=false);
   
-  if(state.point && state.bets.pass>0) {
-    addLog({type:'info',text:`Cleared bets. Pass Line ($${state.bets.pass}) stays — it's a contract bet.`});
+  const contractNames = [];
+  if(state.point && state.bets.pass>0) contractNames.push(`Pass Line ($${state.bets.pass})`);
+  if(state.atsContractual.small && state.bets.small>0) contractNames.push(`Small ($${state.bets.small})`);
+  if(state.atsContractual.tall && state.bets.tall>0) contractNames.push(`Tall ($${state.bets.tall})`);
+  if(state.atsContractual.all && state.bets.all>0) contractNames.push(`Make 'Em All ($${state.bets.all})`);
+  if(contractNames.length>0) {
+    addLog({type:'info',text:`Cleared bets. ${contractNames.join(', ')} stay — contract bets.`});
   }
   updateDisplay();
 }
@@ -861,6 +878,11 @@ function submitRoll() {
   state.rollCount++;
   const logEntries = [];
   logEntries.push({type:'roll', text:`🎲 Roll #${state.rollCount}: [${d1}+${d2}] = ${total} ${isHard?'(HARD!)':''}`});
+
+  // Lock ATS bets as contractual once any roll occurs
+  ['small','tall','all'].forEach(k=>{
+    if(state.bets[k]>0) state.atsContractual[k] = true;
+  });
 
   // ATS tracking (track every roll)
   if(total!==7) {
@@ -951,6 +973,7 @@ function resolveComeOut(total, d1, d2, isHard, log) {
       if(state.bets[k]>0) {
         log.push({type:'loss',text:`${k.toUpperCase()} ATS: Lost $${state.bets[k]} — 7 on come-out`});
         state.bets[k]=0;
+        state.atsContractual[k]=false;
       }
     });
     state.atsSmallHit.clear();
@@ -1032,6 +1055,7 @@ function resolvePointPhase(total, d1, d2, isHard, log) {
       if(state.bets[k]>0) {
         log.push({type:'loss',text:`${k.toUpperCase()} ATS LOSE (7-out): -$${state.bets[k]}`});
         state.bets[k]=0;
+        state.atsContractual[k]=false;
       }
     });
     state.atsSmallHit.clear();
@@ -1298,7 +1322,7 @@ function checkATSWin(log) {
       const win = state.bets.small*34;
       state.bankroll += state.bets.small+win;
       log.push({type:'win',text:`🎉 ALL SMALL WIN! $${state.bets.small} × 34:1 = +$${win}`});
-      state.bets.small=0; state.atsSmallHit.clear();
+      state.bets.small=0; state.atsSmallHit.clear(); state.atsContractual.small=false;
     }
   }
   if(state.bets.tall>0) {
@@ -1306,7 +1330,7 @@ function checkATSWin(log) {
       const win = state.bets.tall*34;
       state.bankroll += state.bets.tall+win;
       log.push({type:'win',text:`🎉 ALL TALL WIN! $${state.bets.tall} × 34:1 = +$${win}`});
-      state.bets.tall=0; state.atsTallHit.clear();
+      state.bets.tall=0; state.atsTallHit.clear(); state.atsContractual.tall=false;
     }
   }
   if(state.bets.all>0) {
@@ -1314,7 +1338,7 @@ function checkATSWin(log) {
       const win = state.bets.all*175;
       state.bankroll += state.bets.all+win;
       log.push({type:'win',text:`🎉🎉 MAKE 'EM ALL WIN!!! $${state.bets.all} × 175:1 = +$${win}`});
-      state.bets.all=0; state.atsSmallHit.clear(); state.atsTallHit.clear();
+      state.bets.all=0; state.atsSmallHit.clear(); state.atsTallHit.clear(); state.atsContractual.all=false;
     }
   }
 }
@@ -1530,7 +1554,7 @@ function updateDisplay() {
   ['small','tall','all'].forEach(k=>{
     renderChips(state.bets[k], `ats-${k}-chips`);
     const el = document.getElementById(`ats-${k}`);
-    if(el) el.className = 'ats-bet'+(state.bets[k]>0?' has-bet':'');
+    if(el) el.className = 'ats-bet'+(state.bets[k]>0?' has-bet':'')+(state.atsContractual[k]?' contractual':'');
   });
   // ATS numbers highlight
   SMALL_NUMS.forEach(n=>{
