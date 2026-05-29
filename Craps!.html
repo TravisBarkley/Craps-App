@@ -412,6 +412,7 @@ let state = {
   // ATS tracking
   atsSmallHit: new Set(),
   atsTallHit: new Set(),
+  atsAllHit: new Set(),
   // ATS contractual lock — once a roll occurs with an ATS bet, it cannot be removed
   atsContractual: {small: false, tall: false, all: false},
   rollCount: 0,
@@ -877,7 +878,7 @@ function submitRoll() {
   
   state.rollCount++;
   const logEntries = [];
-  logEntries.push({type:'roll', text:`🎲 Roll #${state.rollCount}: [${d1}+${d2}] = ${total} ${isHard?'(HARD!)':''}`});
+  logEntries.push({type:'roll', text:`🎲 Roll #${state.rollCount}: [${d1}+${d2}] = ${total} ${isHard&&[4,6,8,10].includes(total)?'(HARD!)':''}`});
 
   // Lock ATS bets as contractual once any roll occurs
   ['small','tall','all'].forEach(k=>{
@@ -888,11 +889,11 @@ function submitRoll() {
   if(total!==7) {
     if(SMALL_NUMS.includes(total)) {
       if(state.bets.small>0) state.atsSmallHit.add(total);
-      if(state.bets.all>0) state.atsSmallHit.add(total);
+      if(state.bets.all>0) state.atsAllHit.add(total);
     }
     if(TALL_NUMS.includes(total)) {
       if(state.bets.tall>0) state.atsTallHit.add(total);
-      if(state.bets.all>0) state.atsTallHit.add(total);
+      if(state.bets.all>0) state.atsAllHit.add(total);
     }
   }
 
@@ -978,7 +979,7 @@ function resolveComeOut(total, d1, d2, isHard, log) {
     });
     state.atsSmallHit.clear();
     state.atsTallHit.clear();
-    // Hardways lose on 7 if manually turned ON for come-out
+    state.atsAllHit.clear();
     [4,6,8,10].forEach(n=>{
       if(state.bets[`hard_${n}`]>0 && state.betOnOff[`hard_${n}`]) {
         log.push({type:'loss',text:`Hard ${n} LOSE (7 on come-out): -$${state.bets[`hard_${n}`]}`});
@@ -1060,6 +1061,7 @@ function resolvePointPhase(total, d1, d2, isHard, log) {
     });
     state.atsSmallHit.clear();
     state.atsTallHit.clear();
+    state.atsAllHit.clear();
     // Reset
     state.point=null;
     state.bets.pass_odds=0;
@@ -1334,11 +1336,11 @@ function checkATSWin(log) {
     }
   }
   if(state.bets.all>0) {
-    if([...SMALL_NUMS,...TALL_NUMS].every(n=>state.atsSmallHit.has(n)||state.atsTallHit.has(n))) {
+    if([...SMALL_NUMS,...TALL_NUMS].every(n=>state.atsAllHit.has(n))) {
       const win = state.bets.all*175;
       state.bankroll += state.bets.all+win;
       log.push({type:'win',text:`🎉🎉 MAKE 'EM ALL WIN!!! $${state.bets.all} × 175:1 = +$${win}`});
-      state.bets.all=0; state.atsSmallHit.clear(); state.atsTallHit.clear(); state.atsContractual.all=false;
+      state.bets.all=0; state.atsAllHit.clear(); state.atsContractual.all=false;
     }
   }
 }
@@ -1561,13 +1563,13 @@ function updateDisplay() {
     const el = document.getElementById(`ats-small-${n}`);
     if(el) el.className = 'ats-num'+(state.atsSmallHit.has(n)?' hit':'');
     const el2 = document.getElementById(`ats-all-${n}`);
-    if(el2) el2.className = 'ats-num'+(state.atsSmallHit.has(n)?' hit':'');
+    if(el2) el2.className = 'ats-num'+(state.atsAllHit.has(n)?' hit':'');
   });
   TALL_NUMS.forEach(n=>{
     const el = document.getElementById(`ats-tall-${n}`);
     if(el) el.className = 'ats-num'+(state.atsTallHit.has(n)?' hit':'');
     const el2 = document.getElementById(`ats-all-${n}`);
-    if(el2) el2.className = 'ats-num'+(state.atsTallHit.has(n)?' hit':'');
+    if(el2) el2.className = 'ats-num'+(state.atsAllHit.has(n)?' hit':'');
   });
 
   // Come points display
