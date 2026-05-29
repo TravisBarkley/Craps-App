@@ -423,7 +423,6 @@ const SMALL_NUMS = [2,3,4,5,6];
 const TALL_NUMS = [8,9,10,11,12];
 
 let pressQueue = [];
-let rollBetReturnOffset = 0; // tracks bet amounts returned-but-staying (place/buy/hard wins)
 
 // ===== BANKROLL SELECTION =====
 let pendingBankroll = 500;
@@ -897,7 +896,6 @@ function submitRoll() {
     }
   }
 
-  rollBetReturnOffset = 0;
   const bankrollBeforeRoll = state.bankroll;
   const betsOutBeforeRoll = getTotalBetsOut();
 
@@ -909,10 +907,9 @@ function submitRoll() {
     resolvePointPhase(total, d1, d2, isHard, logEntries);
   }
 
-  // Compute true roll net: equity change minus double-counted bet returns
+  // Compute true roll net: total equity change
   const betsOutAfterRoll = getTotalBetsOut();
-  const equityChange = (state.bankroll + betsOutAfterRoll) - (bankrollBeforeRoll + betsOutBeforeRoll);
-  const rollNet = equityChange - rollBetReturnOffset;
+  const rollNet = (state.bankroll + betsOutAfterRoll) - (bankrollBeforeRoll + betsOutBeforeRoll);
   const rollEntry = logEntries.find(e=>e.type==='roll');
   if(rollEntry) rollEntry.text += `  |  Roll: ${rollNet>=0?'+':''}$${rollNet.toLocaleString()}`;
 
@@ -928,7 +925,7 @@ function resolveComeOut(total, d1, d2, isHard, log) {
   if(state.bets.pass>0) {
     if(total===7||total===11) {
       const win = state.bets.pass;
-      state.bankroll += win*2;
+      state.bankroll += win;
       log.push({type:'win',text:`Pass Line WIN: $${win} bet × 1:1 = +$${win}`});
     } else if(total===2||total===3||total===12) {
       const loss = state.bets.pass;
@@ -1116,8 +1113,7 @@ function resolvePlaceBuy(total, d1, d2, isHard, log, isComeOut) {
     if(state.bets[`place_${n}`]>0 && state.betOnOff[`place_${n}`]) {
       const bet = state.bets[`place_${n}`];
       const pay = calcPlacePay(n, bet);
-      state.bankroll += bet + pay;
-      rollBetReturnOffset += bet;
+      state.bankroll += pay;
       log.push({type:'win',text:`Place ${n} HIT: $${bet} pays $${pay} (${getPlaceRatio(n)})`});
       pressQueue.push({betKey:`place_${n}`, betType:'place', num:n, currentBet:bet, winAmount:pay});
     }
@@ -1125,8 +1121,7 @@ function resolvePlaceBuy(total, d1, d2, isHard, log, isComeOut) {
     if(state.bets[`buy_${n}`]>0 && state.betOnOff[`buy_${n}`]) {
       const bet = state.bets[`buy_${n}`];
       const trueWin = calcBuyPay(n, bet);
-      state.bankroll += bet + trueWin;
-      rollBetReturnOffset += bet;
+      state.bankroll += trueWin;
       log.push({type:'win',text:`Buy ${n} HIT: $${bet} pays $${trueWin} true odds (${getBuyRatio(n)}) minus 5% vig`});
       pressQueue.push({betKey:`buy_${n}`, betType:'buy', num:n, currentBet:bet, winAmount:trueWin});
     }
@@ -1141,8 +1136,7 @@ function resolveHardways(total, isHard, log) {
       if(total===n) {
         if(isHard) {
           const pay = n===4||n===10 ? bet*7 : bet*9;
-          state.bankroll += bet+pay;
-          rollBetReturnOffset += bet;
+          state.bankroll += pay;
           log.push({type:'win',text:`Hard ${n} HIT! $${bet} × ${n===4||n===10?'7':'9'}:1 = +$${pay}`});
           // Hardway stays
         } else {
