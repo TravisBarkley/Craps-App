@@ -105,7 +105,9 @@ body{font-family:'Segoe UI',sans-serif;background:#1a472a;color:#fff;min-height:
 .chip.c1{background:#888}
 .chip.c5{background:#c0392b}
 .chip.c25{background:#27ae60}
-.chip.c100{background:#2980b9}
+.chip.c100{background:#111;border-color:rgba(255,255,255,0.5)}
+.chip.c500{background:#7b2d8b}
+.chip.c1000{background:#d4a017;color:#000}
 .chip.big{width:24px;height:24px;font-size:0.5rem}
 .bet-amount{font-size:0.55rem;color:#c8a84b;font-weight:700;text-align:center;line-height:1}
 
@@ -118,7 +120,9 @@ body{font-family:'Segoe UI',sans-serif;background:#1a472a;color:#fff;min-height:
 .chip-select.c1{background:#888}
 .chip-select.c5{background:#c0392b}
 .chip-select.c25{background:#27ae60}
-.chip-select.c100{background:#2980b9}
+.chip-select.c100{background:#111;border-color:rgba(255,255,255,0.35)}
+.chip-select.c500{background:#7b2d8b}
+.chip-select.c1000{background:#d4a017;color:#000}
 .roll-area{display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap}
 .die-select{background:rgba(0,0,0,0.4);border:1px solid #555;border-radius:8px;padding:0.35rem 0.5rem;color:#fff;font-size:0.85rem;width:48px;text-align:center}
 .roll-btn{background:linear-gradient(135deg,#c8a84b,#a8882b);color:#000;border:none;padding:0.5rem 1rem;border-radius:8px;font-weight:700;cursor:pointer;font-size:0.85rem;transition:transform 0.1s;white-space:nowrap}
@@ -170,6 +174,29 @@ body{font-family:'Segoe UI',sans-serif;background:#1a472a;color:#fff;min-height:
 .die-pip{width:6px;height:6px;background:#111;border-radius:50%}
 
 .odds-label{font-size:0.5rem;color:#88cc88;font-style:italic}
+
+/* BULK ON/OFF BUTTONS */
+.bulk-toggle-bar{display:flex;gap:4px;justify-content:center;padding:2px 4px;background:rgba(0,0,0,0.25);flex-wrap:wrap}
+.bulk-btn{font-size:0.55rem;padding:2px 8px;border-radius:4px;cursor:pointer;border:1px solid rgba(200,168,75,0.4);color:#c8a84b;background:rgba(0,0,0,0.3);transition:all 0.15s;font-weight:600}
+.bulk-btn:hover{background:rgba(200,168,75,0.2);border-color:#c8a84b}
+.bulk-btn.on-btn{border-color:rgba(68,255,136,0.5);color:#44ff88}
+.bulk-btn.on-btn:hover{background:rgba(68,255,136,0.15)}
+.bulk-btn.off-btn{border-color:rgba(255,68,68,0.5);color:#ff4444}
+.bulk-btn.off-btn:hover{background:rgba(255,68,68,0.15)}
+
+/* COMPUTER ROLL TOGGLE */
+.auto-roll-toggle{display:flex;align-items:center;gap:6px}
+.auto-roll-toggle label{font-size:0.7rem;color:#aaa;cursor:pointer}
+.toggle-switch{position:relative;width:36px;height:20px;cursor:pointer}
+.toggle-switch input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;top:0;left:0;right:0;bottom:0;background:#444;border-radius:20px;transition:0.3s}
+.toggle-slider::before{content:'';position:absolute;height:14px;width:14px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.3s}
+.toggle-switch input:checked+.toggle-slider{background:#44ff88}
+.toggle-switch input:checked+.toggle-slider::before{transform:translateX(16px)}
+
+/* COMPUTER DICE DISPLAY */
+.computer-dice-display{display:flex;gap:6px;align-items:center;padding:4px;min-height:40px}
+.computer-dice-display svg{filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3))}
 
 @media(max-width:500px){
   .numbers-row,.props-row,.ats-row{grid-template-columns:repeat(3,1fr)}
@@ -235,10 +262,18 @@ body{font-family:'Segoe UI',sans-serif;background:#1a472a;color:#fff;min-height:
 
       <!-- NUMBERS -->
       <div class="section-title">POINT NUMBERS — Place / Buy / Odds</div>
+      <div class="bulk-toggle-bar" id="numbers-bulk-bar">
+        <button class="bulk-btn on-btn" onclick="bulkNumbersOn()">All Numbers ON</button>
+        <button class="bulk-btn off-btn" onclick="bulkNumbersOff()">All Numbers OFF</button>
+      </div>
       <div class="numbers-row" id="numbers-row"></div>
 
       <!-- HARDWAYS -->
       <div class="section-title">HARDWAYS</div>
+      <div class="bulk-toggle-bar" id="hardways-bulk-bar">
+        <button class="bulk-btn on-btn" onclick="bulkHardwaysOn()">All Hardways ON</button>
+        <button class="bulk-btn off-btn" onclick="bulkHardwaysOff()">All Hardways OFF</button>
+      </div>
       <div class="hardways-row" id="hardways-row"></div>
 
       <!-- PASS LINE / DONT PASS -->
@@ -320,19 +355,37 @@ body{font-family:'Segoe UI',sans-serif;background:#1a472a;color:#fff;min-height:
         <div class="chip-select c5" onclick="selectChip(5)" id="chip-5" title="$5">5</div>
         <div class="chip-select c25" onclick="selectChip(25)" id="chip-25" title="$25">25</div>
         <div class="chip-select c100" onclick="selectChip(100)" id="chip-100" title="$100">100</div>
+        <div class="chip-select c500" onclick="selectChip(500)" id="chip-500" title="$500">500</div>
+        <div class="chip-select c1000" onclick="selectChip(1000)" id="chip-1000" title="$1000">1k</div>
       </div>
     </div>
     <div class="roll-area">
-      <span style="font-size:0.75rem;color:#aaa">Roll:</span>
-      <select class="die-select" id="die1">
-        <option value="1">⚀ 1</option><option value="2">⚁ 2</option><option value="3">⚂ 3</option>
-        <option value="4">⚃ 4</option><option value="5">⚄ 5</option><option value="6">⚅ 6</option>
-      </select>
-      <select class="die-select" id="die2">
-        <option value="1">⚀ 1</option><option value="2">⚁ 2</option><option value="3">⚂ 3</option>
-        <option value="4">⚃ 4</option><option value="5">⚄ 5</option><option value="6">⚅ 6</option>
-      </select>
-      <div id="roll-preview" class="dice-display"></div>
+      <div class="auto-roll-toggle">
+        <label class="toggle-switch" title="Computer Roll">
+          <input type="checkbox" id="auto-roll-toggle" onchange="toggleAutoRoll()">
+          <span class="toggle-slider"></span>
+        </label>
+        <label for="auto-roll-toggle" style="font-size:0.7rem;color:#aaa;cursor:pointer">Auto</label>
+      </div>
+      <div id="manual-roll-controls">
+        <div style="display:flex;gap:0.5rem;align-items:center">
+          <span style="font-size:0.75rem;color:#aaa">Roll:</span>
+          <select class="die-select" id="die1">
+            <option value="1">⚀ 1</option><option value="2">⚁ 2</option><option value="3">⚂ 3</option>
+            <option value="4">⚃ 4</option><option value="5">⚄ 5</option><option value="6">⚅ 6</option>
+          </select>
+          <select class="die-select" id="die2">
+            <option value="1">⚀ 1</option><option value="2">⚁ 2</option><option value="3">⚂ 3</option>
+            <option value="4">⚃ 4</option><option value="5">⚄ 5</option><option value="6">⚅ 6</option>
+          </select>
+          <div id="roll-preview" class="dice-display"></div>
+        </div>
+      </div>
+      <div id="computer-roll-controls" style="display:none">
+        <div id="computer-dice-result" class="computer-dice-display">
+          <span style="font-size:0.75rem;color:#aaa">Click Roll →</span>
+        </div>
+      </div>
       <button class="roll-btn" id="roll-btn" onclick="submitRoll()">Roll Dice →</button>
     </div>
   </div>
@@ -356,7 +409,7 @@ body{font-family:'Segoe UI',sans-serif;background:#1a472a;color:#fff;min-height:
   </div>
 </div>
 
-<!-- PRESS MODAL -->
+<!-- PRESS MODAL (place/buy bets) -->
 <div class="modal-overlay" id="press-modal">
   <div class="modal">
     <h3 id="press-modal-title">Place Hit!</h3>
@@ -369,6 +422,19 @@ body{font-family:'Segoe UI',sans-serif;background:#1a472a;color:#fff;min-height:
   </div>
 </div>
 
+<!-- HARDWAY PRESS MODAL -->
+<div class="modal-overlay" id="hardway-press-modal">
+  <div class="modal">
+    <h3 id="hw-press-modal-title">Hard Way Hit!</h3>
+    <p id="hw-press-modal-info" style="color:#aaa;font-size:0.85rem;margin-bottom:1rem"></p>
+    <div style="display:flex;flex-direction:column;gap:0.5rem">
+      <button class="modal-btn confirm" onclick="resolveHardwayPress('same')">Same Bet — Collect All</button>
+      <button class="modal-btn" id="hw-press-full-one-btn" onclick="resolveHardwayPress('full_one')" style="background:rgba(200,168,75,0.3);border:1px solid #c8a84b;color:#c8a84b;cursor:pointer">Full Press This Hardway</button>
+      <button class="modal-btn" id="hw-press-full-all-btn" onclick="resolveHardwayPress('full_all')" style="background:rgba(255,68,255,0.3);border:1px solid #ff44ff;color:#ff44ff;cursor:pointer">Full Press ALL Hardways</button>
+    </div>
+  </div>
+</div>
+
 <!-- REMOVE CHIP CONTEXT MENU -->
 <div id="remove-menu" class="remove-menu" style="display:none"></div>
 
@@ -377,52 +443,71 @@ body{font-family:'Segoe UI',sans-serif;background:#1a472a;color:#fff;min-height:
 let state = {
   bankroll: 0,
   startBankroll: 0,
-  point: null, // null = come-out, 4/5/6/8/9/10 = point
+  point: null,
   selectedChip: 1,
   bets: {
     pass: 0,
     pass_odds: 0,
     dont_pass: 0,
     dp_odds: 0,
-    come: 0,  // waiting in come box
+    come: 0,
     dont_come: 0,
     field: 0,
-    // place bets per number
     place_4:0, place_5:0, place_6:0, place_8:0, place_9:0, place_10:0,
-    // buy bets (track separately, pay true odds minus 5% vig)
     buy_4:0, buy_5:0, buy_6:0, buy_8:0, buy_9:0, buy_10:0,
-    // lay bets (against the number; always working)
     lay_4:0, lay_5:0, lay_6:0, lay_8:0, lay_9:0, lay_10:0,
-    // hardways
     hard_4:0, hard_6:0, hard_8:0, hard_10:0,
-    // props
     any7:0, yo11:0, any_craps:0, two:0, three:0, twelve:0, ce:0, horn:0,
-    // ATS
     small:0, tall:0, all:0,
   },
-  // on/off status for place/buy/hardway (true=on, false=off)
   betOnOff: {
     place_4:false, place_5:false, place_6:false, place_8:false, place_9:false, place_10:false,
     buy_4:false, buy_5:false, buy_6:false, buy_8:false, buy_9:false, buy_10:false,
     hard_4:false, hard_6:false, hard_8:false, hard_10:false,
   },
-  // Come point bets: array of {num, amount, odds}
   comeBets: [],
   dontComeBets: [],
-  // ATS tracking
   atsSmallHit: new Set(),
   atsTallHit: new Set(),
   atsAllHit: new Set(),
-  // ATS contractual lock — once a roll occurs with an ATS bet, it cannot be removed
   atsContractual: {small: false, tall: false, all: false},
   rollCount: 0,
-  log: []
+  log: [],
+  autoRoll: false
 };
 
 const SMALL_NUMS = [2,3,4,5,6];
 const TALL_NUMS = [8,9,10,11,12];
+const ALL_CHIP_VALUES = [1,5,25,100,500,1000];
 
 let pressQueue = [];
+let hardwayPressQueue = [];
+
+// ===== TRUE RANDOM DICE =====
+// Uses crypto.getRandomValues for uniform randomness (no weighting)
+function cryptoRandInt(max) {
+  // Rejection sampling to avoid modulo bias
+  const byteCount = 1;
+  const maxValid = Math.floor(256 / max) * max;
+  let val;
+  do {
+    const arr = new Uint8Array(1);
+    crypto.getRandomValues(arr);
+    val = arr[0];
+  } while (val >= maxValid);
+  return (val % max) + 1;
+}
+
+function rollDie() {
+  return cryptoRandInt(6);
+}
+
+// ===== COMPUTER ROLL TOGGLE =====
+function toggleAutoRoll() {
+  state.autoRoll = document.getElementById('auto-roll-toggle').checked;
+  document.getElementById('manual-roll-controls').style.display = state.autoRoll ? 'none' : 'block';
+  document.getElementById('computer-roll-controls').style.display = state.autoRoll ? 'block' : 'none';
+}
 
 // ===== BANKROLL SELECTION =====
 let pendingBankroll = 500;
@@ -533,7 +618,6 @@ function buildProps() {
     row.appendChild(cell);
   });
 
-  // Second row: specific dice combination bets
   const props2 = [
     {key:'two',label:'Aces (1+1=2)',pay:'30:1'},
     {key:'three',label:'Ace-Deuce (2+1=3)',pay:'15:1'},
@@ -577,36 +661,69 @@ function buildATS() {
   });
 }
 
+// ===== BULK ON/OFF =====
+function bulkNumbersOn() {
+  [4,5,6,8,9,10].forEach(n => {
+    if(state.bets[`place_${n}`] > 0) state.betOnOff[`place_${n}`] = true;
+    if(state.bets[`buy_${n}`] > 0) state.betOnOff[`buy_${n}`] = true;
+  });
+  updateDisplay();
+}
+function bulkNumbersOff() {
+  [4,5,6,8,9,10].forEach(n => {
+    state.betOnOff[`place_${n}`] = false;
+    state.betOnOff[`buy_${n}`] = false;
+  });
+  updateDisplay();
+}
+function bulkHardwaysOn() {
+  [4,6,8,10].forEach(n => {
+    if(state.bets[`hard_${n}`] > 0) state.betOnOff[`hard_${n}`] = true;
+  });
+  updateDisplay();
+}
+function bulkHardwaysOff() {
+  [4,6,8,10].forEach(n => {
+    state.betOnOff[`hard_${n}`] = false;
+  });
+  updateDisplay();
+}
+
 // ===== CHIP FUNCTIONS =====
 function selectChip(val) {
   state.selectedChip = val;
-  [1,5,25,100].forEach(v => {
+  ALL_CHIP_VALUES.forEach(v => {
     const el = document.getElementById(`chip-${v}`);
     if(el) el.classList.toggle('selected', v===val);
   });
 }
 
 function chipClass(val) {
+  if(val>=1000) return 'c1000';
+  if(val>=500) return 'c500';
   if(val>=100) return 'c100';
   if(val>=25) return 'c25';
   if(val>=5) return 'c5';
   return 'c1';
 }
 
+function chipLabel(val) {
+  if(val >= 1000) return '$'+(val/1000)+'k';
+  return '$'+val;
+}
+
 function renderChips(amount, containerId) {
   const el = document.getElementById(containerId);
   if(!el) return;
   if(amount <= 0){ el.innerHTML=''; return; }
-  // Show compact chip representation
-  const denoms = [100,25,5,1];
+  const denoms = [1000,500,100,25,5,1];
   let rem = amount;
   let chips = [];
   denoms.forEach(d=>{ while(rem>=d){chips.push(d);rem-=d;} });
-  // Show max 4 chips + amount label
   const showChips = chips.slice(0,4);
   let html = '<div class="chip-stack" onclick="removeChipMenu(event,\''+containerId+'\')">';
   showChips.forEach(c => {
-    html += `<div class="chip ${chipClass(c)}" title="$${c}">$${c}</div>`;
+    html += `<div class="chip ${chipClass(c)}" title="$${c}">${chipLabel(c)}</div>`;
   });
   if(chips.length>4) html+=`<div style="font-size:0.5rem;color:#aaa">+${chips.length-4}</div>`;
   html += `</div><div class="bet-amount">$${amount}</div>`;
@@ -626,10 +743,9 @@ function removeChipMenu(e, containerId) {
   const cur = getBetAmount(betKey);
   let html = `<h4>Adjust: ${betKey.replace(/_/g,' ')}</h4>`;
 
-  // Check if this bet is removable
   const removable = isBetRemovable(betKey);
   if(removable) {
-    [1,5,25,100].forEach(v=>{
+    ALL_CHIP_VALUES.forEach(v=>{
       if(cur>=v) html+=`<button class="remove-option" onclick="removeSome('${betKey}',${v});closeMenu()">Remove $${v} chip</button>`;
     });
     html+=`<button class="remove-option" onclick="removeAll('${betKey}');closeMenu()">Remove all ($${cur})</button>`;
@@ -641,7 +757,6 @@ function removeChipMenu(e, containerId) {
 }
 
 function getBetKeyFromContainerId(id) {
-  // Maps chip container IDs to bet keys
   const map = {
     'pass-chips':'pass','pass-odds-chips':'pass_odds','dp-chips':'dont_pass',
     'dp-odds-chips':'dp_odds','come-chips':'come','dc-chips':'dont_come',
@@ -652,7 +767,6 @@ function getBetKeyFromContainerId(id) {
     'ats-small-chips':'ats_small','ats-tall-chips':'ats_tall','ats-all-chips':'ats_all',
   };
   if(map[id]) return map[id];
-  // Parse place/buy/hard
   const m = id.match(/^(place|buy|lay|hard)-(\d+)-chips$/);
   if(m) return `${m[1]}_${m[2]}`;
   return null;
@@ -664,12 +778,8 @@ function getBetAmount(key) {
 }
 
 function isBetRemovable(key) {
-  // Contract bets that can't be removed once point is set
-  // Pass line and come bets are contracts AFTER point established
-  // Don't pass CAN be removed (bad etiquette but allowed)
   if(key==='pass' && state.point) return false;
   if(key.startsWith('come_point_')) return false;
-  // ATS bets are contractual after first roll
   if(key==='ats_small' && state.atsContractual.small) return false;
   if(key==='ats_tall' && state.atsContractual.tall) return false;
   if(key==='ats_all' && state.atsContractual.all) return false;
@@ -710,7 +820,6 @@ function placeBet(key) {
   const chip = state.selectedChip;
   if(state.bankroll < chip) { alert('Insufficient bankroll!'); return; }
 
-  // Validate bet placement rules
   if(key==='pass' && state.point) {
     alert('Cannot place Pass Line bet once point is established. Try a Come bet instead.');
     return;
@@ -731,7 +840,6 @@ function placeBet(key) {
     alert("Place a Don't Pass bet first!");
     return;
   }
-  // Odds limits
   if(key==='pass_odds') {
     const maxOdds = getMaxOdds(state.point, 'pass');
     const maxBet = state.bets.pass * maxOdds;
@@ -761,7 +869,6 @@ function placeBet(key) {
     state.bets[key] = (state.bets[key]||0)+chip;
     state.bankroll -= chip;
   }
-  // Auto-set on/off for place/buy/hard: ON when point is set
   if(key.startsWith('place_')||key.startsWith('buy_')||key.startsWith('hard_')) {
     state.betOnOff[key] = !!state.point;
   }
@@ -770,7 +877,6 @@ function placeBet(key) {
 }
 
 function getMaxOdds(point, side) {
-  // 3x-4x-5x odds rule: 2x on 4/10, 3x on 5/9, 5x on 6/8
   const map = {4:2,5:3,6:5,8:5,9:3,10:2};
   return map[point] || 1;
 }
@@ -778,7 +884,6 @@ function getMaxOdds(point, side) {
 // ===== TOGGLE ON/OFF =====
 function toggleOnOff(key, e) {
   e.stopPropagation();
-  // Hardways can be toggled anytime; place/buy only when point is set
   if(!state.point && !key.startsWith('hard_')) return;
   state.betOnOff[key] = !state.betOnOff[key];
   updateDisplay();
@@ -786,14 +891,11 @@ function toggleOnOff(key, e) {
 
 // ===== CLEAR BETS =====
 function clearBets() {
-  // Return all non-contractual bets
   const contractual = new Set();
-  if(state.point) contractual.add('pass'); // pass is contractual once point set
-  // ATS bets are contractual after first roll
+  if(state.point) contractual.add('pass');
   if(state.atsContractual.small) contractual.add('small');
   if(state.atsContractual.tall) contractual.add('tall');
   if(state.atsContractual.all) contractual.add('all');
-  // Don't pass CAN be removed (player's choice)
   
   let returned = 0;
   Object.keys(state.bets).forEach(k => {
@@ -802,17 +904,14 @@ function clearBets() {
       state.bets[k] = 0;
     }
   });
-  // Also return come bet points
   state.comeBets.forEach(b=>returned+=b.amount+(b.odds||0));
   state.comeBets = [];
   state.dontComeBets.forEach(b=>returned+=b.amount+(b.odds||0));
   state.dontComeBets = [];
-  // Pass odds
   returned += state.bets.pass_odds;
   state.bets.pass_odds = 0;
 
   state.bankroll += returned;
-  // Reset on/off
   Object.keys(state.betOnOff).forEach(k=>state.betOnOff[k]=false);
   
   const contractNames = [];
@@ -868,10 +967,22 @@ function dieFace(n) {
   return svg;
 }
 
+function updateComputerDiceDisplay(d1, d2) {
+  const el = document.getElementById('computer-dice-result');
+  el.innerHTML = `${dieFace(d1)}${dieFace(d2)}<span style="font-size:0.85rem;color:#c8a84b;font-weight:700;margin-left:4px">= ${d1+d2}</span>`;
+}
+
 // ===== SUBMIT ROLL =====
 function submitRoll() {
-  const d1 = parseInt(document.getElementById('die1').value);
-  const d2 = parseInt(document.getElementById('die2').value);
+  let d1, d2;
+  if(state.autoRoll) {
+    d1 = rollDie();
+    d2 = rollDie();
+    updateComputerDiceDisplay(d1, d2);
+  } else {
+    d1 = parseInt(document.getElementById('die1').value);
+    d2 = parseInt(document.getElementById('die2').value);
+  }
   const total = d1+d2;
   const isHard = d1===d2;
   
@@ -879,12 +990,10 @@ function submitRoll() {
   const logEntries = [];
   logEntries.push({type:'roll', text:`🎲 Roll #${state.rollCount}: [${d1}+${d2}] = ${total} ${isHard&&[4,6,8,10].includes(total)?'(HARD!)':''}`});
 
-  // Lock ATS bets as contractual once any roll occurs
   ['small','tall','all'].forEach(k=>{
     if(state.bets[k]>0) state.atsContractual[k] = true;
   });
 
-  // ATS tracking (track every roll)
   if(total!==7) {
     if(SMALL_NUMS.includes(total)) {
       if(state.bets.small>0) state.atsSmallHit.add(total);
@@ -900,14 +1009,11 @@ function submitRoll() {
   const betsOutBeforeRoll = getTotalBetsOut();
 
   if(!state.point) {
-    // COME-OUT ROLL
     resolveComeOut(total, d1, d2, isHard, logEntries);
   } else {
-    // POINT PHASE
     resolvePointPhase(total, d1, d2, isHard, logEntries);
   }
 
-  // Compute true roll net: total equity change
   const betsOutAfterRoll = getTotalBetsOut();
   const rollNet = (state.bankroll + betsOutAfterRoll) - (bankrollBeforeRoll + betsOutBeforeRoll);
   const rollEntry = logEntries.find(e=>e.type==='roll');
@@ -916,12 +1022,17 @@ function submitRoll() {
   state.log.unshift(logEntries);
   updateLog();
   updateDiceDisplay(d1,d2,total);
-  if(pressQueue.length > 0) { showNextPressModal(); } else { updateDisplay(); }
+  // Process press queue: place/buy first, then hardways
+  if(pressQueue.length > 0) {
+    showNextPressModal();
+  } else if(hardwayPressQueue.length > 0) {
+    showNextHardwayPressModal();
+  } else {
+    updateDisplay();
+  }
 }
 
 function resolveComeOut(total, d1, d2, isHard, log) {
-  // Come-out: place/buy/hard bets are OFF (auto)
-  // Pass line
   if(state.bets.pass>0) {
     if(total===7||total===11) {
       const win = state.bets.pass;
@@ -935,7 +1046,6 @@ function resolveComeOut(total, d1, d2, isHard, log) {
     } else {
       state.point = total;
       log.push({type:'info',text:`Point set to ${total}. Pass Line stays.`});
-      // Auto-turn ON place/buy bets; hardways stay at player's setting
       Object.keys(state.betOnOff).forEach(k=>{ if(!k.startsWith('hard_') && state.bets[k]>0) state.betOnOff[k]=true; });
     }
   } else {
@@ -946,7 +1056,6 @@ function resolveComeOut(total, d1, d2, isHard, log) {
     }
   }
 
-  // Don't Pass on come-out
   if(state.bets.dont_pass>0) {
     if(total===7||total===11) {
       const loss = state.bets.dont_pass;
@@ -960,12 +1069,9 @@ function resolveComeOut(total, d1, d2, isHard, log) {
       state.bets.dont_pass = 0;
     } else if(total===12) {
       log.push({type:'info',text:`Don't Pass PUSH (12 on come-out) — bet returned.`});
-      // push — no win/loss, bet stays
     }
-    // else point set, bet stays
   }
 
-  // ATS loses on come-out 7
   if(total===7) {
     ['small','tall','all'].forEach(k=>{
       if(state.bets[k]>0) {
@@ -985,30 +1091,23 @@ function resolveComeOut(total, d1, d2, isHard, log) {
     });
   }
 
-  // Props (always resolve)
   resolveProps(total, d1, d2, isHard, log);
   resolveField(total, log);
-  // Resolve hardways if manually turned ON for come-out (easy-way loss or hard hit)
   resolveHardways(total, isHard, log);
-  // Lay bets are always working (win on 7, lose on number)
   resolveLayBets(total, log);
 }
 
 function resolvePointPhase(total, d1, d2, isHard, log) {
   const point = state.point;
 
-  // Lay bets always working — resolve before other logic
   resolveLayBets(total, log);
 
-  // SEVEN OUT
   if(total===7) {
-    // Pass Line loses
     if(state.bets.pass>0) {
       log.push({type:'loss',text:`Pass Line SEVEN OUT: -$${state.bets.pass}`});
       if(state.bets.pass_odds>0) log.push({type:'loss',text:`Pass Odds also lost: -$${state.bets.pass_odds}`});
       state.bets.pass=0; state.bets.pass_odds=0;
     }
-    // Don't Pass wins
     if(state.bets.dont_pass>0) {
       const dpOddsWin = calcDontPassOddsWin(point, state.bets.dp_odds);
       const totalWin = state.bets.dont_pass + state.bets.dp_odds + dpOddsWin;
@@ -1016,19 +1115,16 @@ function resolvePointPhase(total, d1, d2, isHard, log) {
       log.push({type:'win',text:`Don't Pass WIN (7-out): +$${state.bets.dont_pass} flat${state.bets.dp_odds>0?` + lay odds +$${dpOddsWin} (lay $${state.bets.dp_odds})`:''}` });
       state.bets.dont_pass=0; state.bets.dp_odds=0;
     }
-    // Come bets lose
     state.comeBets.forEach(b=>{
       log.push({type:'loss',text:`Come bet on ${b.num} SEVEN OUT: -$${b.amount}${b.odds>0?` (odds -$${b.odds})`:''}`});
     });
     state.comeBets=[];
-    // Don't come bets WIN on 7
     state.dontComeBets.forEach(b=>{
       const w = b.amount;
       state.bankroll += w*2;
       log.push({type:'win',text:`Don't Come ${b.num} WIN (7-out): +$${w}`});
     });
     state.dontComeBets=[];
-    // Place/Buy bets are OFF on come-out — they lose on 7 ONLY if ON
     const numBets = [4,5,6,8,9,10];
     numBets.forEach(n=>{
       if(state.bets[`place_${n}`]>0 && state.betOnOff[`place_${n}`]) {
@@ -1048,7 +1144,6 @@ function resolvePointPhase(total, d1, d2, isHard, log) {
         state.bets[`hard_${n}`]=0;
       }
     });
-    // ATS loses on 7
     ['small','tall','all'].forEach(k=>{
       if(state.bets[k]>0) {
         log.push({type:'loss',text:`${k.toUpperCase()} ATS LOSE (7-out): -$${state.bets[k]}`});
@@ -1059,15 +1154,12 @@ function resolvePointPhase(total, d1, d2, isHard, log) {
     state.atsSmallHit.clear();
     state.atsTallHit.clear();
     state.atsAllHit.clear();
-    // Reset
     state.point=null;
     state.bets.pass_odds=0;
-    // Turn off all on/off bets
     Object.keys(state.betOnOff).forEach(k=>state.betOnOff[k]=false);
     log.push({type:'info',text:`Seven-out! New come-out roll.`});
 
   } else if(total===point) {
-    // POINT HIT — Pass Line wins
     if(state.bets.pass>0) {
       const oddsWin = calcPassOddsWin(point, state.bets.pass_odds);
       const flat = state.bets.pass;
@@ -1075,32 +1167,25 @@ function resolvePointPhase(total, d1, d2, isHard, log) {
       log.push({type:'win',text:`Pass Line POINT HIT (${point}): +$${flat}${state.bets.pass_odds>0?` flat + odds $${state.bets.pass_odds} wins $${oddsWin} (${getOddsRatio(point,'pass')})`:''}`});
       state.bets.pass=0; state.bets.pass_odds=0;
     }
-    // Don't pass loses
     if(state.bets.dont_pass>0) {
       log.push({type:'loss',text:`Don't Pass POINT REPEAT: -$${state.bets.dont_pass}${state.bets.dp_odds>0?` + lay odds -$${state.bets.dp_odds}`:''}`});
       state.bets.dont_pass=0; state.bets.dp_odds=0;
     }
-    // Place/Buy pay if ON
     resolvePlaceBuy(total, d1, d2, isHard, log, false);
-    // Hard/Props/Field
     resolveHardways(total, isHard, log);
     resolveProps(total, d1, d2, isHard, log);
     resolveField(total, log);
-    // Come bets
     resolveComeAfterRoll(total, d1, d2, isHard, log);
-    // Reset point
     state.point=null;
     Object.keys(state.betOnOff).forEach(k=>state.betOnOff[k]=false);
     log.push({type:'info',text:`Point ${point} made! New come-out roll.`});
 
   } else {
-    // Other number during point phase
     resolvePlaceBuy(total, d1, d2, isHard, log, false);
     resolveHardways(total, isHard, log);
     resolveProps(total, d1, d2, isHard, log);
     resolveField(total, log);
     resolveComeAfterRoll(total, d1, d2, isHard, log);
-    // Check ATS completion
     checkATSWin(log);
   }
 }
@@ -1109,7 +1194,6 @@ function resolvePlaceBuy(total, d1, d2, isHard, log, isComeOut) {
   const numBets = [4,5,6,8,9,10];
   numBets.forEach(n=>{
     if(n!==total) return;
-    // Place
     if(state.bets[`place_${n}`]>0 && state.betOnOff[`place_${n}`]) {
       const bet = state.bets[`place_${n}`];
       const pay = calcPlacePay(n, bet);
@@ -1117,7 +1201,6 @@ function resolvePlaceBuy(total, d1, d2, isHard, log, isComeOut) {
       log.push({type:'win',text:`Place ${n} HIT: $${bet} pays $${pay} (${getPlaceRatio(n)})`});
       pressQueue.push({betKey:`place_${n}`, betType:'place', num:n, currentBet:bet, winAmount:pay});
     }
-    // Buy
     if(state.bets[`buy_${n}`]>0 && state.betOnOff[`buy_${n}`]) {
       const bet = state.bets[`buy_${n}`];
       const trueWin = calcBuyPay(n, bet);
@@ -1138,20 +1221,18 @@ function resolveHardways(total, isHard, log) {
           const pay = n===4||n===10 ? bet*7 : bet*9;
           state.bankroll += pay;
           log.push({type:'win',text:`Hard ${n} HIT! $${bet} × ${n===4||n===10?'7':'9'}:1 = +$${pay}`});
-          // Hardway stays
+          // Queue hardway press modal
+          hardwayPressQueue.push({num:n, bet:bet, winAmount:pay});
         } else {
-          // Easy way — hardway loses
           log.push({type:'loss',text:`Hard ${n} EASY WAY (${total} not hard): -$${bet}`});
           state.bets[`hard_${n}`]=0;
         }
       }
-      // 7 handled in seven-out above
     }
   });
 }
 
 function resolveProps(total, d1, d2, isHard, log) {
-  // Any 7
   if(state.bets.any7>0) {
     if(total===7) {
       const pay = state.bets.any7*4;
@@ -1162,7 +1243,6 @@ function resolveProps(total, d1, d2, isHard, log) {
     }
     state.bets.any7=0;
   }
-  // Yo 11
   if(state.bets.yo11>0) {
     if(total===11) {
       const pay = state.bets.yo11*15;
@@ -1173,7 +1253,6 @@ function resolveProps(total, d1, d2, isHard, log) {
     }
     state.bets.yo11=0;
   }
-  // Any Craps
   if(state.bets.any_craps>0) {
     if(total===2||total===3||total===12) {
       const pay = state.bets.any_craps*7;
@@ -1184,7 +1263,6 @@ function resolveProps(total, d1, d2, isHard, log) {
     }
     state.bets.any_craps=0;
   }
-  // C&E (half on craps, half on 11)
   if(state.bets.ce>0) {
     const halfBet = Math.floor(state.bets.ce/2);
     if(total===2||total===3||total===12) {
@@ -1200,18 +1278,15 @@ function resolveProps(total, d1, d2, isHard, log) {
     }
     state.bets.ce=0;
   }
-  // Horn (split across 2,3,11,12)
   if(state.bets.horn>0) {
     const quarter = Math.floor(state.bets.horn/4);
     let hornWin = 0;
     if(total===2||total===12) hornWin = quarter*30;
     else if(total===3||total===11) hornWin = quarter*15;
     if(hornWin>0) {
-      state.bankroll += state.bets.horn + hornWin - quarter*(4-1); // win quarter, lose other 3
-      // Actually: win one quarter bet at payout, lose 3 quarters
       const actualWin = hornWin - (quarter*3);
-      state.bankroll += state.bets.horn + actualWin; // already subtracted horn above
-      state.bankroll -= state.bets.horn; // correction
+      state.bankroll += state.bets.horn + actualWin;
+      state.bankroll -= state.bets.horn;
       state.bankroll += actualWin;
       log.push({type:'win',text:`Horn WIN (${total}): $${quarter} on ${total} pays ${total===2||total===12?'30':'15'}:1 = +$${hornWin}, lose other $${quarter*3} = net +$${actualWin}`});
     } else {
@@ -1219,7 +1294,6 @@ function resolveProps(total, d1, d2, isHard, log) {
     }
     state.bets.horn=0;
   }
-  // Two / Three / Twelve
   if(state.bets.two>0) {
     if(total===2){ const p=state.bets.two*30; state.bankroll+=state.bets.two+p; log.push({type:'win',text:`Aces (2) WIN: $${state.bets.two} × 30:1 = +$${p}`}); }
     else log.push({type:'loss',text:`Aces lose: -$${state.bets.two}`});
@@ -1257,7 +1331,6 @@ function resolveField(total, log) {
 }
 
 function resolveComeAfterRoll(total, d1, d2, isHard, log) {
-  // Pending Come bet travels to number
   if(state.bets.come>0) {
     const bet = state.bets.come;
     if(total===7||total===11) {
@@ -1271,7 +1344,6 @@ function resolveComeAfterRoll(total, d1, d2, isHard, log) {
     }
     state.bets.come=0;
   }
-  // Don't Come
   if(state.bets.dont_come>0) {
     const bet = state.bets.dont_come;
     if(total===7||total===11) {
@@ -1288,7 +1360,6 @@ function resolveComeAfterRoll(total, d1, d2, isHard, log) {
     }
     state.bets.dont_come=0;
   }
-  // Resolve come point bets
   const remaining = [];
   state.comeBets.forEach(b=>{
     if(b.num===total) {
@@ -1300,7 +1371,6 @@ function resolveComeAfterRoll(total, d1, d2, isHard, log) {
     }
   });
   state.comeBets = remaining;
-  // Don't Come resolve
   const dcRemaining = [];
   state.dontComeBets.forEach(b=>{
     if(b.num===total) {
@@ -1367,7 +1437,6 @@ function getPlaceRatio(n) {
   return r[n];
 }
 function calcBuyPay(n, bet) {
-  // True odds minus 5% vig on win
   const ratios = {4:[2,1],5:[3,2],6:[6,5],8:[6,5],9:[3,2],10:[2,1]};
   const [num,den] = ratios[n];
   const trueWin = Math.floor(bet*num/den);
@@ -1416,11 +1485,16 @@ function getTotalBetsOut() {
   return total;
 }
 
-// ===== PRESS MODAL =====
+// ===== PRESS MODAL (Place/Buy) =====
 function showNextPressModal() {
   if(pressQueue.length === 0) {
-    document.getElementById('roll-btn').disabled = false;
-    updateDisplay();
+    // Place/buy queue done — now check hardway queue
+    if(hardwayPressQueue.length > 0) {
+      showNextHardwayPressModal();
+    } else {
+      document.getElementById('roll-btn').disabled = false;
+      updateDisplay();
+    }
     return;
   }
   document.getElementById('roll-btn').disabled = true;
@@ -1452,53 +1526,92 @@ function resolvePress(option) {
   showNextPressModal();
 }
 
+// ===== HARDWAY PRESS MODAL =====
+function showNextHardwayPressModal() {
+  if(hardwayPressQueue.length === 0) {
+    document.getElementById('roll-btn').disabled = false;
+    updateDisplay();
+    return;
+  }
+  document.getElementById('roll-btn').disabled = true;
+  const h = hardwayPressQueue[0];
+  document.getElementById('hw-press-modal-title').textContent =
+    `Hard ${h.num} HIT! Won $${h.winAmount}`;
+  document.getElementById('hw-press-modal-info').textContent =
+    `Current bet: $${h.bet}. What would you like to do?`;
+  document.getElementById('hw-press-full-one-btn').textContent =
+    `Full Press Hard ${h.num} → $${h.bet * 2}`;
+  // Build "full press all" label showing what would happen
+  const allCost = [4,6,8,10].reduce((sum,n) => {
+    if(state.bets[`hard_${n}`] > 0) return sum + state.bets[`hard_${n}`];
+    return sum;
+  }, 0);
+  document.getElementById('hw-press-full-all-btn').textContent =
+    `Full Press ALL Hardways (cost $${allCost})`;
+  document.getElementById('hardway-press-modal').classList.add('show');
+}
+
+function resolveHardwayPress(option) {
+  document.getElementById('hardway-press-modal').classList.remove('show');
+  const h = hardwayPressQueue.shift();
+  if(!h) { updateDisplay(); return; }
+
+  if(option === 'full_one') {
+    // Double the hardway that was hit
+    const add = Math.min(h.bet, state.bankroll);
+    if(add > 0) { state.bets[`hard_${h.num}`] += add; state.bankroll -= add; }
+  } else if(option === 'full_all') {
+    // Double ALL active hardways
+    [4,6,8,10].forEach(n => {
+      const cur = state.bets[`hard_${n}`];
+      if(cur > 0) {
+        const add = Math.min(cur, state.bankroll);
+        if(add > 0) { state.bets[`hard_${n}`] += add; state.bankroll -= add; }
+      }
+    });
+  }
+  // 'same' = collect all, do nothing
+
+  showNextHardwayPressModal();
+}
+
 // ===== UPDATE DISPLAY =====
 function updateDisplay() {
-  // Bankroll
   const br = state.bankroll;
   document.getElementById('bankroll-display').textContent = '$'+br.toLocaleString();
 
-  // Bets out
   let totalBets = Object.values(state.bets).reduce((a,b)=>a+b,0);
   state.comeBets.forEach(b=>totalBets+=b.amount+(b.odds||0));
   state.dontComeBets.forEach(b=>totalBets+=b.amount);
   document.getElementById('bets-out-display').textContent = '$'+totalBets.toLocaleString();
 
-  // Point display
   const pEl = document.getElementById('point-display');
   pEl.textContent = state.point ? state.point : 'OFF';
   pEl.className = 'stat-val' + (state.point ? ' green' : '');
 
-  // Session P/L
   const pl = br - state.startBankroll;
   const sEl = document.getElementById('session-display');
   sEl.textContent = (pl>=0?'+':'') + '$'+pl.toLocaleString();
   sEl.className = 'stat-val ' + (pl>0?'green':pl<0?'red':'');
 
-  // Puck on pass line
   const puck = document.getElementById('pass-puck');
   if(puck){ puck.textContent=state.point?state.point:'OFF'; puck.className='puck '+(state.point?'on':'off'); }
 
-  // Pass line styling
   const passArea = document.getElementById('pass-area');
   if(passArea) passArea.className = 'line-bet-area' + (state.bets.pass>0?' pass-on':'');
 
-  // Number headers (point highlight)
   [4,5,6,8,9,10].forEach(n=>{
     const hdr = document.getElementById(`num-hdr-${n}`);
     if(hdr) hdr.className = 'num-header' + (state.point===n?' point-on':'');
-    // Update place/buy/lay chips
     renderChips(state.bets[`place_${n}`], `place-${n}-chips`);
     renderChips(state.bets[`buy_${n}`], `buy-${n}-chips`);
     renderChips(state.bets[`lay_${n}`], `lay-${n}-chips`);
-    // On/off buttons
     const onOffEl = document.getElementById(`onoff-place-${n}`);
     if(onOffEl){
       const isOn = state.betOnOff[`place_${n}`];
       onOffEl.textContent = isOn?'ON':'OFF';
       onOffEl.className = 'on-off-btn '+(isOn?'on':'off');
     }
-    // Zone classes
     const plEl = document.getElementById(`place-${n}`);
     if(plEl) {
       plEl.className = 'bet-zone' + (state.bets[`place_${n}`]>0?' has-bet':'') + (!state.betOnOff[`place_${n}`]&&state.bets[`place_${n}`]>0?' off-indicator':'');
@@ -1507,7 +1620,6 @@ function updateDisplay() {
     if(layEl) layEl.className = 'bet-zone lay-zone' + (state.bets[`lay_${n}`]>0?' has-bet':'');
   });
 
-  // Hardways on/off
   [4,6,8,10].forEach(n=>{
     const onOffEl = document.getElementById(`onoff-hard-${n}`);
     if(onOffEl){
@@ -1520,7 +1632,6 @@ function updateDisplay() {
     if(hardEl) hardEl.className = 'hard-bet'+(state.bets[`hard_${n}`]>0?' has-bet':'');
   });
 
-  // Pass/DP chips
   renderChips(state.bets.pass, 'pass-chips');
   renderChips(state.bets.pass_odds, 'pass-odds-chips');
   renderChips(state.bets.dont_pass, 'dp-chips');
@@ -1529,7 +1640,6 @@ function updateDisplay() {
   renderChips(state.bets.dont_come, 'dc-chips');
   renderChips(state.bets.field, 'field-chips');
 
-  // Odds labels
   if(state.point) {
     const maxO = getMaxOdds(state.point,'pass');
     const maxDO = getMaxOdds(state.point,'dont');
@@ -1539,20 +1649,17 @@ function updateDisplay() {
     if(dOL) dOL.textContent = `Max ${maxDO}x`;
   }
 
-  // Props
   ['any7','yo11','any_craps','ce','horn','two','three','twelve'].forEach(k=>{
     renderChips(state.bets[k], `prop-${k}-chips`);
     const el = document.getElementById(`prop-${k}`);
     if(el) el.className = 'prop-bet'+(state.bets[k]>0?' has-bet':'');
   });
 
-  // ATS
   ['small','tall','all'].forEach(k=>{
     renderChips(state.bets[k], `ats-${k}-chips`);
     const el = document.getElementById(`ats-${k}`);
     if(el) el.className = 'ats-bet'+(state.bets[k]>0?' has-bet':'')+(state.atsContractual[k]?' contractual':'');
   });
-  // ATS numbers highlight
   SMALL_NUMS.forEach(n=>{
     const el = document.getElementById(`ats-small-${n}`);
     if(el) el.className = 'ats-num'+(state.atsSmallHit.has(n)?' hit':'');
@@ -1566,7 +1673,6 @@ function updateDisplay() {
     if(el2) el2.className = 'ats-num'+(state.atsAllHit.has(n)?' hit':'');
   });
 
-  // Come points display
   updateComePointsDisplay();
 }
 
