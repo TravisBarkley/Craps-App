@@ -438,6 +438,30 @@ body{font-family:'Segoe UI',sans-serif;background:#1a472a;color:#fff;min-height:
 <!-- REMOVE CHIP CONTEXT MENU -->
 <div id="remove-menu" class="remove-menu" style="display:none"></div>
 
+<!-- MAKE EM ALL CONGRATS MODAL -->
+<div class="modal-overlay" id="congrats-modal">
+  <div class="modal" style="border-color:#ff44ff;max-width:400px">
+    <div style="font-size:2.5rem;margin-bottom:0.5rem">🎉🎲🎉</div>
+    <h3 style="color:#ff44ff;font-size:1.4rem;margin-bottom:0.5rem">MAKE 'EM ALL!</h3>
+    <p style="color:#c8a84b;font-size:1rem;margin-bottom:1rem;font-weight:700">CONGRATULATIONS!</p>
+    <div style="background:rgba(255,68,255,0.1);border:1px solid rgba(255,68,255,0.3);border-radius:8px;padding:1rem;margin-bottom:1rem">
+      <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem">
+        <span style="color:#aaa;font-size:0.85rem">Bet Amount:</span>
+        <span style="color:#fff;font-weight:700;font-size:0.95rem" id="congrats-bet">$0</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem">
+        <span style="color:#aaa;font-size:0.85rem">Multiplier:</span>
+        <span style="color:#ff44ff;font-weight:700;font-size:0.95rem">175 : 1</span>
+      </div>
+      <div style="border-top:1px solid rgba(255,68,255,0.3);padding-top:0.5rem;margin-top:0.5rem;display:flex;justify-content:space-between">
+        <span style="color:#c8a84b;font-size:1rem;font-weight:700">WINNINGS:</span>
+        <span style="color:#44ff88;font-weight:700;font-size:1.2rem" id="congrats-win">$0</span>
+      </div>
+    </div>
+    <button class="modal-btn confirm" onclick="hideModal('congrats-modal')" style="width:100%;background:linear-gradient(135deg,#ff44ff,#aa22aa);color:#fff;font-size:1rem;padding:0.75rem">Collect Winnings 💰</button>
+  </div>
+</div>
+
 <script>
 // ===== STATE =====
 let state = {
@@ -843,16 +867,38 @@ function placeBet(key) {
   if(key==='pass_odds') {
     const maxOdds = getMaxOdds(state.point, 'pass');
     const maxBet = state.bets.pass * maxOdds;
+    if(state.bets.pass_odds >= maxBet) {
+      alert(`Already at max odds for point ${state.point}: ${maxOdds}x ($${maxBet})`);
+      return;
+    }
     if(state.bets.pass_odds + chip > maxBet) {
-      alert(`Max odds for point ${state.point} is ${maxOdds}x ($${maxBet})`);
+      const remaining = maxBet - state.bets.pass_odds;
+      const actualAdd = Math.min(remaining, state.bankroll);
+      if(actualAdd > 0) {
+        state.bets.pass_odds += actualAdd;
+        state.bankroll -= actualAdd;
+        updateDisplay();
+        alert(`Odds maxed out at $${maxBet} (${maxOdds}x on point ${state.point}). Added $${actualAdd}.`);
+      }
       return;
     }
   }
   if(key==='dp_odds') {
     const maxOdds = getMaxOdds(state.point, 'dont');
     const maxBet = state.bets.dont_pass * maxOdds;
+    if(state.bets.dp_odds >= maxBet) {
+      alert(`Already at max lay odds for point ${state.point}: ${maxOdds}x ($${maxBet})`);
+      return;
+    }
     if(state.bets.dp_odds + chip > maxBet) {
-      alert(`Max lay odds for point ${state.point} is ${maxOdds}x ($${maxBet})`);
+      const remaining = maxBet - state.bets.dp_odds;
+      const actualAdd = Math.min(remaining, state.bankroll);
+      if(actualAdd > 0) {
+        state.bets.dp_odds += actualAdd;
+        state.bankroll -= actualAdd;
+        updateDisplay();
+        alert(`Lay odds maxed out at $${maxBet} (${maxOdds}x on point ${state.point}). Added $${actualAdd}.`);
+      }
       return;
     }
   }
@@ -1401,10 +1447,15 @@ function checkATSWin(log) {
   }
   if(state.bets.all>0) {
     if([...SMALL_NUMS,...TALL_NUMS].every(n=>state.atsAllHit.has(n))) {
-      const win = state.bets.all*175;
-      state.bankroll += state.bets.all+win;
-      log.push({type:'win',text:`🎉🎉 MAKE 'EM ALL WIN!!! $${state.bets.all} × 175:1 = +$${win}`});
+      const betAmt = state.bets.all;
+      const win = betAmt*175;
+      state.bankroll += betAmt+win;
+      log.push({type:'win',text:`🎉🎉 MAKE 'EM ALL WIN!!! $${betAmt} × 175:1 = +$${win}`});
       state.bets.all=0; state.atsAllHit.clear(); state.atsContractual.all=false;
+      // Show congrats modal
+      document.getElementById('congrats-bet').textContent = '$'+betAmt.toLocaleString();
+      document.getElementById('congrats-win').textContent = '$'+win.toLocaleString();
+      document.getElementById('congrats-modal').classList.add('show');
     }
   }
 }
@@ -1692,11 +1743,24 @@ function addComeOdds(idx) {
   const b = state.comeBets[idx];
   if(!b) return;
   const chip = state.selectedChip;
-  if(state.bankroll<chip){alert('Insufficient bankroll');return;}
+  if(state.bankroll<chip && state.bankroll<=0){alert('Insufficient bankroll');return;}
   const maxO = getMaxOdds(b.num,'pass');
   const maxBet = b.amount*maxO;
-  if((b.odds||0)+chip>maxBet){ alert(`Max odds for ${b.num} is ${maxO}x ($${maxBet})`); return; }
-  b.odds = (b.odds||0)+chip;
+  const currentOdds = b.odds||0;
+  if(currentOdds >= maxBet){ alert(`Already at max odds for ${b.num}: ${maxO}x ($${maxBet})`); return; }
+  if(currentOdds+chip>maxBet){
+    const remaining = maxBet - currentOdds;
+    const actualAdd = Math.min(remaining, state.bankroll);
+    if(actualAdd > 0) {
+      b.odds = currentOdds + actualAdd;
+      state.bankroll -= actualAdd;
+      updateDisplay();
+      alert(`Come ${b.num} odds maxed out at $${maxBet} (${maxO}x). Added $${actualAdd}.`);
+    }
+    return;
+  }
+  if(state.bankroll<chip){alert('Insufficient bankroll');return;}
+  b.odds = currentOdds+chip;
   state.bankroll -= chip;
   updateDisplay();
 }
